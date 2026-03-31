@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartPick — Find the Best Products for Your Budget</title>
+<meta name="description" content="Compare laptops, phones, and headphones. Get personalized recommendations within your budget with direct Amazon links.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============ RESET & BASE ============ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f0f2f5;
+  color: #1a1a2e;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ============ HERO SECTION ============ */
+.hero {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%);
+  padding: 60px 20px 80px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(circle at 30% 50%, rgba(99,102,241,0.08) 0%, transparent 50%),
+              radial-gradient(circle at 70% 50%, rgba(249,115,22,0.06) 0%, transparent 50%);
+  animation: heroGlow 8s ease-in-out infinite alternate;
+}
+@keyframes heroGlow {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(-2%, 2%); }
+}
+.hero-content { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; }
+.hero h1 {
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
+}
+.hero h1 span { color: #f97316; }
+.hero p {
+  color: rgba(255,255,255,0.65);
+  font-size: 1.05rem;
+  margin-bottom: 32px;
+}
+
+/* ============ SEARCH BAR ============ */
+.search-wrap {
+  display: flex;
+  max-width: 600px;
+  margin: 0 auto 24px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  overflow: hidden;
+  transition: box-shadow 0.3s;
+}
+.search-wrap:focus-within {
+  box-shadow: 0 8px 40px rgba(99,102,241,0.35);
+}
+.search-wrap input {
+  flex: 1;
+  border: none;
+  padding: 18px 24px;
+  font-size: 1rem;
+  font-family: inherit;
+  outline: none;
+  background: transparent;
+  color: #1a1a2e;
+}
+.search-wrap input::placeholder { color: #9ca3af; }
+.search-wrap button {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  border: none;
+  color: #fff;
+  padding: 18px 28px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+.search-wrap button:hover { opacity: 0.9; }
+
+/* ============ CHIPS ============ */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.chip {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.8);
+  padding: 8px 16px;
+  border-radius: 100px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.chip:hover {
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+}
+
+/* ============ RESULTS AREA ============ */
+.results-area {
+  max-width: 1100px;
+  margin: -40px auto 40px;
+  padding: 0 20px;
+  position: relative;
+  z-index: 2;
+}
+
+/* Stats bar */
+.stats-bar {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.stats-bar.visible { display: flex; }
+.stats-bar .stats-text {
+  font-weight: 600;
+  color: #1a1a2e;
+}
+.stats-bar .stats-text span { color: #f97316; }
+.stats-bar .stats-sub { color: #6b7280; font-size: 0.9rem; }
+
+/* ============ GRID ============ */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+@media (min-width: 640px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 960px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+
+/* ============ PRODUCT CARD ============ */
+.card {
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.25s, box-shadow 0.25s;
+  position: relative;
+  opacity: 0;
+  transform: translateY(24px);
+  animation: cardIn 0.5s ease forwards;
+}
+.card:nth-child(1) { animation-delay: 0.05s; }
+.card:nth-child(2) { animation-delay: 0.15s; }
+.card:nth-child(3) { animation-delay: 0.25s; }
+.card:nth-child(4) { animation-delay: 0.35s; }
+@keyframes cardIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+}
+
+/* Badge */
+.badge {
+  position: absolute;
+  top: 14px; left: 14px;
+  padding: 5px 12px;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+  z-index: 1;
+  letter-spacing: 0.2px;
+}
+.badge-overall { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+.badge-value { background: linear-gradient(135deg, #10b981, #059669); }
+.badge-performance { background: linear-gradient(135deg, #f43f5e, #e11d48); }
+.badge-battery { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+
+/* Card body */
+.card-body {
+  padding: 20px 20px 0;
+  flex: 1;
+}
+.card-body h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: #1a1a2e;
+  line-height: 1.35;
+}
+.card-price {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0f3460;
+  margin-bottom: 8px;
+}
+.card-rating {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.stars { color: #f59e0b; font-size: 0.9rem; letter-spacing: 1px; }
+.rating-num { font-size: 0.85rem; color: #6b7280; font-weight: 500; }
+
+/* Specs */
+.specs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+  margin-bottom: 14px;
+}
+.spec {
+  font-size: 0.8rem;
+  color: #4b5563;
+}
+.spec strong {
+  color: #1a1a2e;
+  font-weight: 600;
+}
+
+/* Why badge */
+.why-box {
+  background: #f8fafc;
+  border-left: 3px solid #6366f1;
+  padding: 10px 12px;
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 16px;
+}
+.why-box p {
+  font-size: 0.82rem;
+  color: #475569;
+  line-height: 1.5;
+}
+.why-box p strong {
+  color: #4f46e5;
+}
+
+/* CTA */
+.card-cta {
+  padding: 0 20px 20px;
+}
+.btn-amazon {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 13px;
+  background: linear-gradient(135deg, #FF9900, #e88b00);
+  color: #fff;
+  text-decoration: none;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(255,153,0,0.3);
+}
+.btn-amazon:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(255,153,0,0.4);
+}
+
+/* ============ LOADING ============ */
+.loader {
+  display: none;
+  text-align: center;
+  padding: 60px 20px;
+}
+.loader.visible { display: block; }
+.spinner {
+  width: 40px; height: 40px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loader p { color: #6b7280; }
+
+/* ============ EMPTY STATE ============ */
+.empty-state {
+  display: none;
+  text-align: center;
+  padding: 60px 20px;
+}
+.empty-state.visible { display: block; }
+.empty-state .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+.empty-state h3 { color: #374151; margin-bottom: 8px; }
+.empty-state p { color: #6b7280; max-width: 400px; margin: 0 auto; }
+
+/* ============ FOOTER ============ */
+footer {
+  text-align: center;
+  padding: 40px 20px;
+  color: #9ca3af;
+  font-size: 0.85rem;
+}
+footer a { color: #6366f1; text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+
+/* ============ UTILITY ============ */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+</style>
+</head>
+<body>
+
+<!-- ======== HERO ======== -->
+<section class="hero">
+  <div class="hero-content">
+    <h1>Smart<span>Pick</span></h1>
+    <p>Find the best laptop, phone, or headphones — within your budget, ranked by real specs.</p>
+    <div class="search-wrap" id="searchWrap">
+      <input type="text" id="searchInput" placeholder="Try 'laptop under 60000' or 'best phone under 20000'" aria-label="Search products">
+      <button id="searchBtn">Search</button>
+    </div>
+    <div class="chips" id="chips">
+      <span class="chip" data-q="laptop under 40000">💻 Laptop under ₹40K</span>
+      <span class="chip" data-q="phone under 20000">📱 Phone under ₹20K</span>
+      <span class="chip" data-q="headphones under 5000">🎧 Headphones under ₹5K</span>
+      <span class="chip" data-q="laptop under 70000">💻 Laptop under ₹70K</span>
+      <span class="chip" data-q="phone under 50000">📱 Phone under ₹50K</span>
+      <span class="chip" data-q="headphones under 20000">🎧 Headphones under ₹20K</span>
+    </div>
+  </div>
+</section>
+
+<!-- ======== RESULTS ======== -->
+<main class="results-area">
+  <div class="stats-bar" id="statsBar">
+    <div>
+      <div class="stats-text" id="statsText"></div>
+      <div class="stats-sub" id="statsSub"></div>
+    </div>
+  </div>
+  <div class="loader" id="loader">
+    <div class="spinner"></div>
+    <p>Finding the best picks for you…</p>
+  </div>
+  <div class="empty-state" id="emptyState">
+    <div class="empty-icon">🔍</div>
+    <h3>No products found</h3>
+    <p>Try a higher budget or different category. Example: "laptop under 60000" or "phone under 30000".</p>
+  </div>
+  <div class="grid" id="grid"></div>
+</main>
+
+<footer>
+  <p>SmartPick — Prices are approximate. As an Amazon Associate, we earn from qualifying purchases.</p>
+</footer>
+
+<script>
+/* ================================================================
+   PRODUCT DATABASE
+   ================================================================ */
+const PRODUCTS = {
+  laptop: [
+    { name:"Lenovo IdeaPad Slim 3", brand:"Lenovo", price:33490, rating:4.2, processor:"Intel i3-1215U", ram:"8GB DDR4", storage:"512GB SSD", display:"15.6\" FHD IPS", battery:"45Wh", gpu:null, procTier:3, ramGB:8, storageGB:512, batteryWh:45 },
+    { name:"Acer Aspire Lite AL15-52", brand:"Acer", price:31990, rating:4.1, processor:"AMD Ryzen 5 5500U", ram:"8GB DDR4", storage:"512GB SSD", display:"15.6\" FHD IPS", battery:"50Wh", gpu:null, procTier:5, ramGB:8, storageGB:512, batteryWh:50 },
+    { name:"HP 15s-fq5330TU", brand:"HP", price:35990, rating:4.2, processor:"Intel i3-1215U", ram:"8GB DDR4", storage:"512GB SSD", display:"15.6\" FHD", battery:"41Wh", gpu:null, procTier:3, ramGB:8, storageGB:512, batteryWh:41 },
+    { name:"Dell Inspiron 15 3530", brand:"Dell", price:47990, rating:4.3, processor:"Intel i5-1235U", ram:"8GB DDR4", storage:"512GB SSD", display:"15.6\" FHD", battery:"54Wh", gpu:null, procTier:5, ramGB:8, storageGB:512, batteryWh:54 },
+    { name:"ASUS VivoBook 15 X1504ZA", brand:"ASUS", price:52990, rating:4.3, processor:"Intel i5-1235U", ram:"16GB DDR4", storage:"512GB SSD", display:"15.6\" FHD IPS", battery:"42Wh", gpu:null, procTier:5, ramGB:16, storageGB:512, batteryWh:42 },
+    { name:"HP Victus 15-fa1124TX", brand:"HP", price:54990, rating:4.3, processor:"Intel i5-12450H", ram:"8GB DDR4", storage:"512GB SSD", display:"15.6\" FHD 144Hz", battery:"70Wh", gpu:"NVIDIA GTX 1650", procTier:5, ramGB:8, storageGB:512, batteryWh:70 },
+    { name:"Lenovo IdeaPad Slim 5 14IAH8", brand:"Lenovo", price:55990, rating:4.4, processor:"AMD Ryzen 5 7530U", ram:"16GB DDR5", storage:"512GB SSD", display:"14\" FHD+ IPS", battery:"57Wh", gpu:null, procTier:5, ramGB:16, storageGB:512, batteryWh:57 },
+    { name:"HP Pavilion 14-dv2014TU", brand:"HP", price:58990, rating:4.3, processor:"Intel i5-1340P", ram:"16GB DDR4", storage:"512GB SSD", display:"14\" FHD IPS", battery:"43Wh", gpu:null, procTier:5, ramGB:16, storageGB:512, batteryWh:43 },
+    { name:"Dell Inspiron 14 5430", brand:"Dell", price:62490, rating:4.4, processor:"Intel i5-1335U", ram:"16GB DDR5", storage:"1TB SSD", display:"14\" FHD+", battery:"54Wh", gpu:null, procTier:5, ramGB:16, storageGB:1024, batteryWh:54 },
+    { name:"Apple MacBook Air M1", brand:"Apple", price:67990, rating:4.7, processor:"Apple M1", ram:"8GB Unified", storage:"256GB SSD", display:"13.3\" Retina", battery:"49.9Wh", gpu:"Integrated 7-core GPU", procTier:7, ramGB:8, storageGB:256, batteryWh:49.9 },
+    { name:"ASUS VivoBook Pro 15 K6502VU", brand:"ASUS", price:68990, rating:4.4, processor:"Intel i7-12650H", ram:"16GB DDR5", storage:"512GB SSD", display:"15.6\" FHD 120Hz", battery:"70Wh", gpu:null, procTier:7, ramGB:16, storageGB:512, batteryWh:70 },
+    { name:"Lenovo IdeaPad Pro 5 14AHP9", brand:"Lenovo", price:74990, rating:4.5, processor:"AMD Ryzen 7 7735HS", ram:"16GB DDR5", storage:"512GB SSD", display:"14\" 2.8K OLED", battery:"75Wh", gpu:null, procTier:7, ramGB:16, storageGB:512, batteryWh:75 },
+    { name:"ASUS TUF Gaming F15 FX507VU", brand:"ASUS", price:79990, rating:4.4, processor:"Intel i5-12500H", ram:"16GB DDR5", storage:"512GB SSD", display:"15.6\" FHD 144Hz", battery:"90Wh", gpu:"NVIDIA RTX 4050", procTier:5, ramGB:16, storageGB:512, batteryWh:90 },
+    { name:"Acer Nitro V ANV15-51", brand:"Acer", price:84990, rating:4.3, processor:"Intel i5-13420H", ram:"16GB DDR5", storage:"512GB SSD", display:"15.6\" FHD 144Hz", battery:"57Wh", gpu:"NVIDIA RTX 4060", procTier:5, ramGB:16, storageGB:512, batteryWh:57 },
+    { name:"Apple MacBook Air M2", brand:"Apple", price:89990, rating:4.7, processor:"Apple M2", ram:"8GB Unified", storage:"256GB SSD", display:"13.6\" Liquid Retina", battery:"52.6Wh", gpu:"Integrated 8-core GPU", procTier:8, ramGB:8, storageGB:256, batteryWh:52.6 }
+  ],
+  phone: [
+    { name:"Realme Narzo 60", brand:"Realme", price:12999, rating:4.1, camera:"50MP + 2MP", battery:"5000mAh", display:"6.4\" FHD+ AMOLED", processor:"MediaTek Dimensity 6020", mainMP:50, lenses:2, batteryMAh:5000, procTier:3, displayTier:4 },
+    { name:"iQOO Z9 5G", brand:"iQOO", price:14499, rating:4.2, camera:"50MP + 2MP", battery:"5000mAh", display:"6.67\" FHD+ AMOLED 120Hz", processor:"MediaTek Dimensity 7200", mainMP:50, lenses:2, batteryMAh:5000, procTier:5, displayTier:6 },
+    { name:"Samsung Galaxy M34 5G", brand:"Samsung", price:14999, rating:4.2, camera:"50MP + 8MP + 2MP", battery:"6000mAh", display:"6.5\" FHD+ sAMOLED 120Hz", processor:"Samsung Exynos 1280", mainMP:50, lenses:3, batteryMAh:6000, procTier:4, displayTier:6 },
+    { name:"POCO X6 5G", brand:"POCO", price:16999, rating:4.3, camera:"64MP + 8MP", battery:"5100mAh", display:"6.67\" FHD+ AMOLED 120Hz", processor:"Snapdragon 7s Gen 2", mainMP:64, lenses:2, batteryMAh:5100, procTier:5, displayTier:6 },
+    { name:"Nothing Phone (2a)", brand:"Nothing", price:19999, rating:4.4, camera:"50MP + 50MP", battery:"5000mAh", display:"6.7\" FHD+ AMOLED 120Hz", processor:"MediaTek Dimensity 7200 Pro", mainMP:50, lenses:2, batteryMAh:5000, procTier:5, displayTier:6 },
+    { name:"Samsung Galaxy A35 5G", brand:"Samsung", price:22999, rating:4.2, camera:"50MP + 8MP + 5MP", battery:"5000mAh", display:"6.6\" FHD+ sAMOLED 120Hz", processor:"Samsung Exynos 1380", mainMP:50, lenses:3, batteryMAh:5000, procTier:4, displayTier:6 },
+    { name:"OnePlus Nord CE 4", brand:"OnePlus", price:24999, rating:4.3, camera:"50MP + 8MP", battery:"5500mAh", display:"6.67\" FHD+ AMOLED 120Hz", processor:"Snapdragon 7 Gen 3", mainMP:50, lenses:2, batteryMAh:5500, procTier:6, displayTier:6 },
+    { name:"Samsung Galaxy S23 FE", brand:"Samsung", price:29999, rating:4.3, camera:"50MP + 12MP + 8MP", battery:"4500mAh", display:"6.4\" FHD+ Dynamic AMOLED 120Hz", processor:"Samsung Exynos 2200", mainMP:50, lenses:3, batteryMAh:4500, procTier:6, displayTier:7 },
+    { name:"OnePlus 12R", brand:"OnePlus", price:34999, rating:4.5, camera:"50MP + 8MP + 2MP", battery:"5500mAh", display:"6.78\" FHD+ LTPO AMOLED 120Hz", processor:"Snapdragon 8 Gen 2", mainMP:50, lenses:3, batteryMAh:5500, procTier:8, displayTier:8 },
+    { name:"Apple iPhone 13", brand:"Apple", price:39999, rating:4.6, camera:"12MP + 12MP", battery:"3240mAh", display:"6.1\" OLED", processor:"Apple A15 Bionic", mainMP:12, lenses:2, batteryMAh:3240, procTier:8, displayTier:7 },
+    { name:"Google Pixel 8", brand:"Google", price:45999, rating:4.5, camera:"50MP + 12MP", battery:"4575mAh", display:"6.2\" FHD+ OLED 120Hz", processor:"Google Tensor G3", mainMP:50, lenses:2, batteryMAh:4575, procTier:7, displayTier:7 },
+    { name:"OnePlus 12", brand:"OnePlus", price:49999, rating:4.6, camera:"50MP + 48MP + 64MP", battery:"5400mAh", display:"6.82\" QHD+ LTPO AMOLED 120Hz", processor:"Snapdragon 8 Gen 3", mainMP:50, lenses:3, batteryMAh:5400, procTier:9, displayTier:9 },
+    { name:"Samsung Galaxy S24", brand:"Samsung", price:54999, rating:4.5, camera:"50MP + 12MP + 10MP", battery:"4000mAh", display:"6.2\" FHD+ Dynamic AMOLED 120Hz", processor:"Snapdragon 8 Gen 3", mainMP:50, lenses:3, batteryMAh:4000, procTier:9, displayTier:8 },
+    { name:"Apple iPhone 15", brand:"Apple", price:59999, rating:4.7, camera:"48MP + 12MP", battery:"3349mAh", display:"6.1\" OLED", processor:"Apple A16 Bionic", mainMP:48, lenses:2, batteryMAh:3349, procTier:9, displayTier:7 },
+    { name:"Samsung Galaxy S24 Ultra", brand:"Samsung", price:89999, rating:4.7, camera:"200MP + 12MP + 50MP + 10MP", battery:"5000mAh", display:"6.8\" QHD+ Dynamic AMOLED 120Hz", processor:"Snapdragon 8 Gen 3", mainMP:200, lenses:4, batteryMAh:5000, procTier:9, displayTier:10 }
+  ],
+  headphones: [
+    { name:"boAt Rockerz 450", brand:"boAt", price:1099, rating:4.0, batteryLife:"40 hrs", sound:"Good", type:"Wireless Over-ear", features:"Bluetooth 5.0", soundTier:3, batteryHrs:40, featureScore:0, isWired:false },
+    { name:"OnePlus Bullets Z2", brand:"OnePlus", price:1299, rating:4.1, batteryLife:"30 hrs", sound:"Good", type:"Wireless Neckband", features:"Bluetooth 5.0, IP55", soundTier:3, batteryHrs:30, featureScore:0, isWired:false },
+    { name:"JBL Tune 510BT", brand:"JBL", price:2499, rating:4.2, batteryLife:"40 hrs", sound:"Very Good", type:"Wireless On-ear", features:"Bluetooth 5.0, JBL Pure Bass", soundTier:5, batteryHrs:40, featureScore:0, isWired:false },
+    { name:"Sony WH-CH520", brand:"Sony", price:3499, rating:4.3, batteryLife:"50 hrs", sound:"Very Good", type:"Wireless On-ear", features:"Bluetooth 5.2, DSEE", soundTier:5, batteryHrs:50, featureScore:1, isWired:false },
+    { name:"Samsung Galaxy Buds FE", brand:"Samsung", price:4999, rating:4.2, batteryLife:"6 hrs (+21 hrs case)", sound:"Very Good", type:"True Wireless", features:"Bluetooth 5.2, ANC, IPX2", soundTier:5, batteryHrs:27, featureScore:4, isWired:false },
+    { name:"JBL Tune 770NC", brand:"JBL", price:5499, rating:4.3, batteryLife:"44 hrs", sound:"Excellent", type:"Wireless Over-ear", features:"Bluetooth 5.3, ANC", soundTier:8, batteryHrs:44, featureScore:3, isWired:false },
+    { name:"Sennheiser HD 599", brand:"Sennheiser", price:8999, rating:4.5, batteryLife:"Wired", sound:"Excellent", type:"Wired Open-back Over-ear", features:"50Ω, Detachable Cable", soundTier:8, batteryHrs:100, featureScore:0, isWired:true },
+    { name:"JBL Live 660NC", brand:"JBL", price:9999, rating:4.4, batteryLife:"40 hrs", sound:"Excellent", type:"Wireless Over-ear", features:"Bluetooth 5.0, ANC, Ambient Aware", soundTier:8, batteryHrs:40, featureScore:3, isWired:false },
+    { name:"Audio-Technica ATH-M50x", brand:"Audio-Technica", price:10990, rating:4.6, batteryLife:"Wired", sound:"Excellent", type:"Wired Closed-back Over-ear", features:"38Ω, Foldable, 3 Cables", soundTier:8, batteryHrs:100, featureScore:0, isWired:true },
+    { name:"Sony WH-1000XM4", brand:"Sony", price:17990, rating:4.6, batteryLife:"30 hrs", sound:"Excellent", type:"Wireless Over-ear", features:"Bluetooth 5.0, ANC, LDAC, Hi-Res", soundTier:8, batteryHrs:30, featureScore:5, isWired:false },
+    { name:"Apple AirPods Pro 2", brand:"Apple", price:19900, rating:4.6, batteryLife:"6 hrs (+30 hrs case)", sound:"Excellent", type:"True Wireless", features:"Bluetooth 5.3, ANC, Spatial Audio", soundTier:8, batteryHrs:36, featureScore:4, isWired:false },
+    { name:"Sony WH-1000XM5", brand:"Sony", price:24990, rating:4.7, batteryLife:"30 hrs", sound:"Excellent", type:"Wireless Over-ear", features:"Bluetooth 5.2, ANC, LDAC, Hi-Res", soundTier:8, batteryHrs:30, featureScore:6, isWired:false }
+  ]
+};
+
+/* ================================================================
+   PARSE QUERY
+   ================================================================ */
+function parseQuery(q) {
+  q = q.toLowerCase().trim();
+  let category = null;
+  if (/laptop|notebook|macbook/.test(q)) category = 'laptop';
+  else if (/phone|mobile|iphone|smartphone/.test(q)) category = 'phone';
+  else if (/headphone|earphone|earbud|headset|earbuds/.test(q)) category = 'headphones';
+
+  let budget = null;
+  // Match patterns like "under 60000", "below 60k", "< 60000", "upto 60000"
+  const m = q.match(/(?:under|below|<|upto|up to|within|less than|max)\s*(?:₹|rs\.?|inr)?\s*([\d,]+)\s*(k)?/i);
+  if (m) {
+    budget = parseInt(m[1].replace(/,/g, ''), 10);
+    if (m[2]) budget *= 1000;
+  }
+  // Also try trailing number: "laptop 60000"
+  if (!budget) {
+    const m2 = q.match(/([\d,]+)\s*(k)?\s*$/);
+    if (m2) {
+      budget = parseInt(m2[1].replace(/,/g, ''), 10);
+      if (m2[2]) budget *= 1000;
+    }
+  }
+  return { category, budget };
+}
+
+/* ================================================================
+   SCORING
+   ================================================================ */
+function scoreLaptops(items) {
+  const maxBat = Math.max(...items.map(p => p.batteryWh));
+  return items.map(p => {
+    const gpuBonus = p.gpu && !p.gpu.startsWith('Integrated') ? 2 : 0;
+    const perfScore = p.procTier + (p.ramGB >= 16 ? 8 : 4) + gpuBonus;
+    const storScore = p.storageGB >= 1024 ? 8 : (p.storageGB >= 512 ? 5 : 3);
+    const batScore = (p.batteryWh / maxBat) * 10;
+    const valueScore = (perfScore + storScore) / (p.price / 10000);
+    const overall = perfScore * 0.4 + valueScore * 0.3 + batScore * 0.2 + storScore * 0.1;
+    return { ...p, perfScore, storScore, batScore, valueScore, overall, _cat: 'laptop' };
+  });
+}
+
+function scorePhones(items) {
+  const maxBat = Math.max(...items.map(p => p.batteryMAh));
+  return items.map(p => {
+    const camScore = Math.min((p.mainMP / 20), 5) + Math.min(p.lenses, 4);
+    const batScore = (p.batteryMAh / maxBat) * 10;
+    const perfScore = p.procTier;
+    const dispScore = p.displayTier;
+    const overall = camScore * 0.3 + perfScore * 0.3 + batScore * 0.2 + dispScore * 0.2;
+    return { ...p, camScore, batScore, perfScore, dispScore, overall, valueScore: overall / (p.price / 10000), _cat: 'phone' };
+  });
+}
+
+function scoreHeadphones(items) {
+  const maxBat = Math.max(...items.map(p => p.batteryHrs));
+  return items.map(p => {
+    const batScore = (p.batteryHrs / maxBat) * 10;
+    const valueScore = (p.soundTier + p.featureScore) / (p.price / 1000);
+    const overall = p.soundTier * 0.4 + batScore * 0.2 + p.featureScore * 0.2 + valueScore * 0.2;
+    return { ...p, batScore, valueScore, perfScore: p.soundTier + p.featureScore, overall, _cat: 'headphones' };
+  });
+}
+
+/* ================================================================
+   LABEL ASSIGNMENT
+   ================================================================ */
+function assignLabels(scored) {
+  if (scored.length === 0) return [];
+  // Sort by overall desc
+  scored.sort((a, b) => b.overall - a.overall);
+  // Take top 4
+  let top = scored.slice(0, 4);
+  // Assign labels
+  const used = new Set();
+  const labels = [
+    { key: 'overall', field: 'overall', label: '🏆 Best Overall', cls: 'badge-overall' },
+    { key: 'value', field: 'valueScore', label: '💰 Best Value', cls: 'badge-value' },
+    { key: 'performance', field: 'perfScore', label: '⚡ Best Performance', cls: 'badge-performance' },
+    { key: 'battery', field: 'batScore', label: '🔋 Best Battery', cls: 'badge-battery' }
+  ];
+
+  // For headphones, relabel battery as "Best Battery Life" / sound quality
+  const result = top.map(p => ({ ...p, label: null, labelCls: null }));
+
+  for (const lb of labels) {
+    // Find the product in top that has highest field and not yet labeled
+    let best = null, bestVal = -Infinity;
+    for (const p of result) {
+      if (!p.label && p[lb.field] > bestVal) {
+        bestVal = p[lb.field];
+        best = p;
+      }
+    }
+    if (best) {
+      best.label = lb.label;
+      best.labelCls = lb.cls;
+    }
+  }
+  // If any still unlabeled (edge case), give generic
+  result.forEach(p => {
+    if (!p.label) { p.label = '⭐ Top Pick'; p.labelCls = 'badge-overall'; }
+  });
+
+  return result;
+}
+
+/* ================================================================
+   WHY TEXT
+   ================================================================ */
+function whyText(p) {
+  const cat = p._cat;
+  if (p.label.includes('Overall')) {
+    if (cat === 'laptop') return `Delivers the best balance of <strong>${p.processor}</strong> performance, ${p.ram} RAM, and ${p.battery} battery — the top all-rounder at this price.`;
+    if (cat === 'phone') return `Top overall pick with <strong>${p.processor}</strong>, ${p.camera} camera, and a solid ${p.battery} battery — hard to beat at ₹${p.price.toLocaleString('en-IN')}.`;
+    return `Best all-round headphones here — <strong>${p.sound}</strong> sound quality with ${p.features} make this the one to pick.`;
+  }
+  if (p.label.includes('Value')) {
+    if (cat === 'laptop') return `You get <strong>${p.processor}</strong> + ${p.ram} RAM + ${p.storage} for just ₹${p.price.toLocaleString('en-IN')} — unmatched bang for your buck.`;
+    if (cat === 'phone') return `<strong>${p.processor}</strong> chipset and ${p.camera} cameras at ₹${p.price.toLocaleString('en-IN')} — maximum specs per rupee in this range.`;
+    return `At just ₹${p.price.toLocaleString('en-IN')}, you get <strong>${p.sound}</strong> sound quality — the best deal in this budget.`;
+  }
+  if (p.label.includes('Performance')) {
+    if (cat === 'laptop') return `Powered by <strong>${p.processor}</strong>${p.gpu && !p.gpu.startsWith('Integrated') ? ' + ' + p.gpu : ''} with ${p.ram} — the fastest machine in this range for heavy tasks.`;
+    if (cat === 'phone') return `<strong>${p.processor}</strong> is the most powerful chipset here — blazing fast for gaming, multitasking, and everything in between.`;
+    return `<strong>${p.sound}</strong> audio with ${p.features} — delivers the most premium listening experience in this range.`;
+  }
+  if (p.label.includes('Battery')) {
+    if (cat === 'laptop') return `A massive <strong>${p.battery}</strong> battery means this lasts the longest on a single charge — perfect if you're always on the move.`;
+    if (cat === 'phone') return `A huge <strong>${p.battery}</strong> battery — the longest lasting phone in this range. Easily a full-day+ device.`;
+    return p.isWired ? `<strong>Wired design</strong> means zero battery anxiety — plug in and enjoy excellent sound indefinitely.` : `<strong>${p.batteryLife}</strong> of playback — the longest lasting headphones in this budget.`;
+  }
+  return `A solid pick with great specs at this price point.`;
+}
+
+/* ================================================================
+   RENDER
+   ================================================================ */
+function renderCards(products) {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  products.forEach(p => {
+    const cat = p._cat;
+    const amazonQuery = encodeURIComponent(p.brand + ' ' + p.name);
+    const amazonURL = `https://www.amazon.in/s?k=${amazonQuery}&tag=bestsalerpro07-21`;
+
+    // Build stars
+    const fullStars = Math.floor(p.rating);
+    const halfStar = p.rating % 1 >= 0.3;
+    let starsHTML = '★'.repeat(fullStars) + (halfStar ? '½' : '') + '☆'.repeat(5 - fullStars - (halfStar ? 1 : 0));
+
+    // Build specs HTML
+    let specsHTML = '';
+    if (cat === 'laptop') {
+      specsHTML = `
+        <div class="spec"><strong>CPU:</strong> ${p.processor}</div>
+        <div class="spec"><strong>RAM:</strong> ${p.ram}</div>
+        <div class="spec"><strong>Storage:</strong> ${p.storage}</div>
+        <div class="spec"><strong>Display:</strong> ${p.display}</div>
+        <div class="spec"><strong>Battery:</strong> ${p.battery}</div>
+        ${p.gpu && !p.gpu.startsWith('Integrated') ? `<div class="spec"><strong>GPU:</strong> ${p.gpu}</div>` : `<div class="spec"></div>`}
+      `;
+    } else if (cat === 'phone') {
+      specsHTML = `
+        <div class="spec"><strong>Camera:</strong> ${p.camera}</div>
+        <div class="spec"><strong>Battery:</strong> ${p.battery}</div>
+        <div class="spec"><strong>Display:</strong> ${p.display}</div>
+        <div class="spec"><strong>Chip:</strong> ${p.processor}</div>
+      `;
+    } else {
+      specsHTML = `
+        <div class="spec"><strong>Battery:</strong> ${p.batteryLife}</div>
+        <div class="spec"><strong>Sound:</strong> ${p.sound}</div>
+        <div class="spec"><strong>Type:</strong> ${p.type}</div>
+        <div class="spec"><strong>Features:</strong> ${p.features}</div>
+      `;
+    }
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="badge ${p.labelCls}">${p.label}</div>
+      <div class="card-body">
+        <h3>${p.brand} ${p.name}</h3>
+        <div class="card-price">₹${p.price.toLocaleString('en-IN')}</div>
+        <div class="card-rating">
+          <span class="stars">${starsHTML}</span>
+          <span class="rating-num">${p.rating.toFixed(1)}</span>
+        </div>
+        <div class="specs">${specsHTML}</div>
+        <div class="why-box"><p>${whyText(p)}</p></div>
+      </div>
+      <div class="card-cta">
+        <a href="${amazonURL}" target="_blank" rel="noopener noreferrer" class="btn-amazon">Buy on Amazon →</a>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+/* ================================================================
+   SEARCH
+   ================================================================ */
+function doSearch(query) {
+  const grid = document.getElementById('grid');
+  const loader = document.getElementById('loader');
+  const emptyState = document.getElementById('emptyState');
+  const statsBar = document.getElementById('statsBar');
+
+  grid.innerHTML = '';
+  statsBar.classList.remove('visible');
+  emptyState.classList.remove('visible');
+  loader.classList.add('visible');
+
+  setTimeout(() => {
+    loader.classList.remove('visible');
+
+    const { category, budget } = parseQuery(query);
+
+    if (!category || !budget) {
+      emptyState.querySelector('h3').textContent = 'Could not understand your search';
+      emptyState.querySelector('p').textContent = 'Please include a category and budget. Example: "laptop under 60000", "phone under 20000", or "headphones under 5000".';
+      emptyState.classList.add('visible');
+      return;
+    }
+
+    const pool = PRODUCTS[category];
+    if (!pool) { emptyState.classList.add('visible'); return; }
+
+    const filtered = pool.filter(p => p.price <= budget);
+
+    if (filtered.length === 0) {
+      const cheapest = pool.reduce((a, b) => a.price < b.price ? a : b);
+      emptyState.querySelector('h3').textContent = 'No products in this budget';
+      emptyState.querySelector('p').textContent = `The most affordable ${category} starts at ₹${cheapest.price.toLocaleString('en-IN')}. Try increasing your budget.`;
+      emptyState.classList.add('visible');
+      return;
+    }
+
+    let scored;
+    if (category === 'laptop') scored = scoreLaptops(filtered);
+    else if (category === 'phone') scored = scorePhones(filtered);
+    else scored = scoreHeadphones(filtered);
+
+    const labeled = assignLabels(scored);
+
+    // Stats
+    const catNames = { laptop: 'Laptops', phone: 'Phones', headphones: 'Headphones' };
+    document.getElementById('statsText').innerHTML = `<span>${labeled.length}</span> top ${catNames[category]} under <span>₹${budget.toLocaleString('en-IN')}</span>`;
+    document.getElementById('statsSub').textContent = `Ranked from ${filtered.length} products by performance, value & battery`;
+    statsBar.classList.add('visible');
+
+    renderCards(labeled);
+  }, 600);
+}
+
+/* ================================================================
+   EVENT LISTENERS
+   ================================================================ */
+document.getElementById('searchBtn').addEventListener('click', () => {
+  const q = document.getElementById('searchInput').value.trim();
+  if (q) doSearch(q);
+});
+
+document.getElementById('searchInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const q = e.target.value.trim();
+    if (q) doSearch(q);
+  }
+});
+
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    const q = chip.dataset.q;
+    document.getElementById('searchInput').value = q;
+    doSearch(q);
+  });
+});
+</script>
+</body>
+</html>
