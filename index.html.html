@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartPick AI — Find Your Perfect Product</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--primary:#6C5CE7;--primary-light:#a855f7;--bg:#0a0a1a;--card:#12122a;--card-border:#1e1e3a;--text:#e8e8f0;--text-muted:#8888a8;--amazon:#FF9900;--flipkart:#2874F0;--green:#10b981;--gold:#f59e0b;--blue:#3b82f6;--purple:#a855f7;--radius:16px}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:8px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:#333;border-radius:4px}
+
+/* Hero */
+.hero{position:relative;padding:80px 20px 60px;text-align:center;background:linear-gradient(135deg,#0a0a1a 0%,#1a1040 40%,#0d0d2b 100%);overflow:hidden}
+.hero::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle at 30% 50%,rgba(108,92,231,0.08) 0%,transparent 50%),radial-gradient(circle at 70% 50%,rgba(168,85,247,0.06) 0%,transparent 50%);animation:heroGlow 8s ease-in-out infinite alternate}
+@keyframes heroGlow{0%{transform:translate(0,0)}100%{transform:translate(-2%,1%)}}
+.hero-content{position:relative;z-index:1;max-width:800px;margin:0 auto}
+.logo{display:inline-flex;align-items:center;gap:10px;margin-bottom:30px;font-size:1.1rem;font-weight:700;color:var(--primary-light)}
+.logo i{font-size:1.4rem}
+.hero h1{font-size:clamp(2rem,5vw,3.5rem);font-weight:900;margin-bottom:12px;background:linear-gradient(135deg,#fff 0%,#c4b5fd 50%,#a855f7 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p{font-size:clamp(1rem,2vw,1.2rem);color:var(--text-muted);margin-bottom:40px;max-width:600px;margin-left:auto;margin-right:auto}
+
+/* Search */
+.search-wrap{position:relative;max-width:640px;margin:0 auto 30px}
+.search-wrap input{width:100%;padding:18px 60px 18px 24px;font-size:1.05rem;font-family:inherit;border:2px solid var(--card-border);border-radius:60px;background:var(--card);color:var(--text);outline:none;transition:all .3s}
+.search-wrap input:focus{border-color:var(--primary);box-shadow:0 0 0 4px rgba(108,92,231,0.15)}
+.search-wrap input::placeholder{color:var(--text-muted)}
+.search-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:48px;height:48px;border:none;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;font-size:1.1rem;cursor:pointer;transition:transform .2s,box-shadow .2s}
+.search-btn:hover{transform:translateY(-50%) scale(1.05);box-shadow:0 4px 20px rgba(108,92,231,0.4)}
+
+/* Category Chips */
+.chips{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-bottom:10px}
+.chip{padding:8px 18px;border-radius:30px;background:rgba(108,92,231,0.1);border:1px solid rgba(108,92,231,0.2);color:var(--text-muted);font-size:.85rem;font-weight:500;cursor:pointer;transition:all .25s}
+.chip:hover,.chip.active{background:rgba(108,92,231,0.2);border-color:var(--primary);color:var(--text)}
+.chip i{margin-right:6px}
+
+/* Results Container */
+.container{max-width:1280px;margin:0 auto;padding:0 20px 80px}
+
+/* Section Header */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin:50px 0 30px;flex-wrap:wrap;gap:12px}
+.section-header h2{font-size:1.8rem;font-weight:800}
+.ai-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:30px;background:linear-gradient(135deg,rgba(108,92,231,0.15),rgba(168,85,247,0.15));border:1px solid rgba(108,92,231,0.3);font-size:.8rem;font-weight:600;color:var(--primary-light)}
+.ai-badge i{font-size:.7rem}
+
+/* Empty State */
+.empty-state{text-align:center;padding:60px 20px}
+.empty-icon{font-size:4rem;margin-bottom:20px;opacity:.3}
+.empty-state h3{font-size:1.3rem;font-weight:600;margin-bottom:10px;color:var(--text-muted)}
+.empty-state p{color:var(--text-muted);font-size:.95rem;margin-bottom:30px}
+.trending{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.trending-chip{padding:6px 16px;border-radius:20px;background:var(--card);border:1px solid var(--card-border);color:var(--text-muted);font-size:.82rem;cursor:pointer;transition:all .2s}
+.trending-chip:hover{border-color:var(--primary);color:var(--text)}
+
+/* Loading */
+.loading{text-align:center;padding:80px 20px}
+.loader{width:50px;height:50px;border:3px solid var(--card-border);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 20px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading p{color:var(--text-muted);font-size:.95rem}
+.loading .dots::after{content:'';animation:dots 1.5s steps(4,end) infinite}
+@keyframes dots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
+
+/* Product Grid */
+.product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px}
+
+/* Product Card */
+.product-card{position:relative;background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);overflow:hidden;transition:transform .3s,box-shadow .3s;animation:fadeInUp .5s ease both}
+.product-card:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.product-card.best-overall{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold),0 8px 30px rgba(245,158,11,0.1)}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* Badge */
+.badge{position:absolute;top:14px;right:14px;padding:5px 12px;border-radius:20px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;z-index:2}
+.badge-overall{background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff}
+.badge-value{background:linear-gradient(135deg,#10b981,#059669);color:#fff}
+.badge-performance{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff}
+.badge-battery{background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff}
+
+/* Card Image */
+.card-img{height:180px;display:flex;align-items:center;justify-content:center;font-size:3.5rem;position:relative;overflow:hidden}
+.card-img::before{content:'';position:absolute;inset:0}
+.card-img.laptop::before{background:linear-gradient(135deg,#1e1b4b,#312e81)}
+.card-img.phone::before{background:linear-gradient(135deg,#1a1a2e,#2d1b69)}
+.card-img.headphone::before{background:linear-gradient(135deg,#1b2e1e,#1b4b2e)}
+.card-img.tablet::before{background:linear-gradient(135deg,#2e1a1a,#4b1b1b)}
+.card-img.smartwatch::before{background:linear-gradient(135deg,#1a2e2e,#1b4b4b)}
+.card-img.tv::before{background:linear-gradient(135deg,#2e2e1a,#4b4b1b)}
+.card-img.camera::before{background:linear-gradient(135deg,#1a1a2e,#1b1b4b)}
+.card-img.default::before{background:linear-gradient(135deg,#1e1e3a,#2a2a4a)}
+.card-img i{position:relative;z-index:1;opacity:.5}
+
+/* Card Body */
+.card-body{padding:20px}
+.card-body h3{font-size:1.05rem;font-weight:700;margin-bottom:8px;line-height:1.3}
+.price{font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:8px}
+.price span{font-size:.85rem;font-weight:400;color:var(--text-muted);text-decoration:line-through;margin-left:8px}
+
+/* Stars */
+.stars{display:flex;align-items:center;gap:3px;margin-bottom:12px}
+.stars i{font-size:.8rem;color:var(--gold)}
+.stars i.empty{color:#333}
+.stars .rating-num{margin-left:6px;font-size:.82rem;color:var(--text-muted);font-weight:500}
+
+/* Specs */
+.specs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.spec-tag{padding:4px 10px;border-radius:6px;background:rgba(108,92,231,0.08);border:1px solid rgba(108,92,231,0.15);font-size:.72rem;color:var(--text-muted);font-weight:500}
+
+/* Why Best */
+.why-best{font-size:.82rem;color:var(--primary-light);font-style:italic;margin-bottom:16px;padding:8px 12px;background:rgba(108,92,231,0.06);border-radius:8px;border-left:3px solid var(--primary)}
+
+/* Buttons */
+.btn-row{display:flex;gap:8px}
+.btn-affiliate{flex:1;padding:12px 16px;border:none;border-radius:10px;font-family:inherit;font-size:.85rem;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;color:#fff}
+.btn-affiliate:hover{transform:scale(1.03);box-shadow:0 4px 15px rgba(0,0,0,.3)}
+.btn-amazon{background:linear-gradient(135deg,#FF9900,#e68a00)}
+.btn-flipkart{background:linear-gradient(135deg,#2874F0,#1a5fd0)}
+
+/* Comparison Table */
+.comparison-section{margin-top:60px}
+.comparison-section h2{font-size:1.5rem;font-weight:800;margin-bottom:24px;display:flex;align-items:center;gap:10px}
+.comparison-table{width:100%;border-collapse:collapse;border-radius:var(--radius);overflow:hidden;background:var(--card);border:1px solid var(--card-border)}
+.comparison-table th{padding:14px 16px;background:rgba(108,92,231,0.1);font-size:.8rem;font-weight:700;text-align:left;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);border-bottom:1px solid var(--card-border)}
+.comparison-table td{padding:12px 16px;font-size:.88rem;border-bottom:1px solid rgba(255,255,255,0.03)}
+.comparison-table tr:nth-child(even) td{background:rgba(255,255,255,0.01)}
+.comparison-table td.highlight{color:var(--green);font-weight:600}
+.comparison-table .product-col-header{font-weight:700;color:var(--text);font-size:.85rem}
+
+/* Footer */
+.footer{text-align:center;padding:40px 20px;color:var(--text-muted);font-size:.8rem;border-top:1px solid var(--card-border)}
+.footer a{color:var(--primary-light)}
+
+/* Responsive */
+@media(max-width:768px){
+  .hero{padding:60px 16px 40px}
+  .product-grid{grid-template-columns:1fr}
+  .section-header h2{font-size:1.4rem}
+  .comparison-table{font-size:.8rem;display:block;overflow-x:auto}
+}
+@media(min-width:769px) and (max-width:1024px){
+  .product-grid{grid-template-columns:repeat(2,1fr)}
+}
+
+/* Card delay animations */
+.product-card:nth-child(1){animation-delay:.1s}
+.product-card:nth-child(2){animation-delay:.2s}
+.product-card:nth-child(3){animation-delay:.3s}
+.product-card:nth-child(4){animation-delay:.4s}
+</style>
+</head>
+<body>
+
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-content">
+    <div class="logo"><i class="fas fa-bolt"></i> SmartPick AI</div>
+    <h1>Find Your Perfect Product</h1>
+    <p>AI-powered search that analyzes specs, ratings &amp; value to find the absolute best picks for you.</p>
+    <div class="search-wrap">
+      <input type="text" id="searchInput" placeholder='Try "laptop under 60000"'>
+      <button class="search-btn" id="searchBtn" aria-label="Search"><i class="fas fa-arrow-right"></i></button>
+    </div>
+    <div class="chips" id="categoryChips">
+      <div class="chip" data-query="best laptops under 60000"><i class="fas fa-laptop"></i>Laptops</div>
+      <div class="chip" data-query="best phones under 30000"><i class="fas fa-mobile-alt"></i>Phones</div>
+      <div class="chip" data-query="best wireless headphones under 5000"><i class="fas fa-headphones"></i>Headphones</div>
+      <div class="chip" data-query="best tablets under 25000"><i class="fas fa-tablet-alt"></i>Tablets</div>
+      <div class="chip" data-query="best smartwatches under 10000"><i class="fas fa-clock"></i>Smartwatches</div>
+      <div class="chip" data-query="best 4k TVs under 40000"><i class="fas fa-tv"></i>TVs</div>
+    </div>
+  </div>
+</section>
+
+<!-- Results -->
+<div class="container">
+  <div id="resultsArea">
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">🔍</div>
+      <h3>Search for any product to get AI-powered recommendations</h3>
+      <p>Our AI analyzes specs, ratings, and price to find the best options for you</p>
+      <div class="trending">
+        <div class="trending-chip" data-query="laptop under 50000">💻 Laptop under ₹50K</div>
+        <div class="trending-chip" data-query="phone under 20000">📱 Phone under ₹20K</div>
+        <div class="trending-chip" data-query="noise cancelling headphones">🎧 ANC Headphones</div>
+        <div class="trending-chip" data-query="gaming laptop under 80000">🎮 Gaming Laptop</div>
+        <div class="trending-chip" data-query="smartwatch with SpO2">⌚ Smartwatch with SpO2</div>
+        <div class="trending-chip" data-query="4k TV under 35000">📺 4K TV under ₹35K</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+  <p>SmartPick AI &mdash; AI-powered product recommendations. Prices are indicative.<br>As an affiliate, we may earn from qualifying purchases. <a href="#">Learn more</a></p>
+</footer>
+
+<script>
+// ===================== PRODUCT DATABASE =====================
+class ProductDatabase {
+  constructor() {
+    this.categories = {
+      laptop: {
+        icon: 'fa-laptop', cssClass: 'laptop',
+        brands: ['ASUS VivoBook', 'HP Pavilion', 'Lenovo IdeaPad', 'Dell Inspiron', 'Acer Aspire', 'MSI Modern'],
+        models: ['Pro 15', 'Slim 14', 'Flex 5', '15s', 'Vero 14', '14 B12M'],
+        specs: ['Processor', 'RAM', 'Storage', 'Display', 'Battery Life', 'Weight'],
+        specOptions: {
+          Processor: ['Intel i3-1215U', 'Intel i5-1235U', 'Intel i5-1340P', 'AMD Ryzen 5 7530U', 'AMD Ryzen 7 7730U', 'Intel i7-1355U'],
+          RAM: ['8GB DDR4', '8GB DDR5', '16GB DDR4', '16GB DDR5', '32GB DDR5'],
+          Storage: ['256GB SSD', '512GB SSD', '512GB NVMe SSD', '1TB SSD', '1TB NVMe SSD'],
+          Display: ['14" FHD IPS', '15.6" FHD IPS', '14" 2.8K OLED', '15.6" FHD 144Hz', '14" FHD Anti-glare'],
+          'Battery Life': ['6 hours', '8 hours', '10 hours', '12 hours', '14 hours'],
+          Weight: ['1.4 kg', '1.6 kg', '1.7 kg', '1.8 kg', '2.1 kg']
+        },
+        priceRange: [28000, 85000],
+        scoreWeights: { Processor: 3, RAM: 2, Storage: 2, Display: 1.5, 'Battery Life': 2, Weight: 1 }
+      },
+      phone: {
+        icon: 'fa-mobile-alt', cssClass: 'phone',
+        brands: ['Samsung Galaxy', 'OnePlus', 'iPhone', 'Realme', 'Xiaomi', 'Google Pixel'],
+        models: ['A54 5G', 'Nord CE 3', '15', 'GT Neo 5', '14 Ultra', '8a'],
+        specs: ['Processor', 'RAM', 'Storage', 'Camera', 'Battery', 'Display'],
+        specOptions: {
+          Processor: ['Snapdragon 695', 'Snapdragon 778G+', 'Snapdragon 8 Gen 2', 'Dimensity 9200', 'A16 Bionic', 'Tensor G3'],
+          RAM: ['6GB', '8GB', '8GB', '12GB', '12GB', '16GB'],
+          Storage: ['128GB', '128GB', '256GB', '256GB', '512GB', '512GB'],
+          Camera: ['50MP + 8MP', '64MP + 8MP + 2MP', '108MP + 12MP + 5MP', '200MP + 12MP + 50MP', '50MP OIS + 48MP UW', '50MP + 64MP Tele'],
+          Battery: ['4000mAh', '4500mAh', '5000mAh', '5000mAh', '5500mAh', '5500mAh'],
+          Display: ['6.4" AMOLED 90Hz', '6.5" AMOLED 120Hz', '6.7" LTPO AMOLED 120Hz', '6.7" Dynamic AMOLED 2X', '6.1" OLED 60Hz', '6.8" AMOLED 144Hz']
+        },
+        priceRange: [10000, 80000],
+        scoreWeights: { Processor: 3, RAM: 1.5, Storage: 1.5, Camera: 2.5, Battery: 2, Display: 1.5 }
+      },
+      headphone: {
+        icon: 'fa-headphones', cssClass: 'headphone',
+        brands: ['Sony WH-', 'JBL Tune', 'Bose QuietComfort', 'Sennheiser HD', 'boAt Rockerz', 'AKG N'],
+        models: ['1000XM5', '770NC', 'Ultra', '450BT', '551ANC', '700NC M2'],
+        specs: ['Driver Size', 'Battery Life', 'Noise Cancellation', 'Connectivity', 'Weight'],
+        specOptions: {
+          'Driver Size': ['30mm', '40mm', '40mm', '42mm', '50mm', '50mm'],
+          'Battery Life': ['20 hours', '25 hours', '30 hours', '35 hours', '40 hours', '50 hours'],
+          'Noise Cancellation': ['Basic ANC', 'Adaptive ANC', 'Advanced ANC', 'Multi-mode ANC', 'Best-in-class ANC', 'Hybrid ANC'],
+          Connectivity: ['Bluetooth 5.0', 'Bluetooth 5.1', 'Bluetooth 5.2', 'Bluetooth 5.3', 'Bluetooth 5.3 + LDAC', 'Bluetooth 5.3 + aptX HD'],
+          Weight: ['180g', '200g', '220g', '250g', '260g', '280g']
+        },
+        priceRange: [1500, 30000],
+        scoreWeights: { 'Driver Size': 2, 'Battery Life': 2.5, 'Noise Cancellation': 3, Connectivity: 1.5, Weight: 1 }
+      },
+      tablet: {
+        icon: 'fa-tablet-alt', cssClass: 'tablet',
+        brands: ['Samsung Galaxy Tab', 'iPad', 'Lenovo Tab', 'Xiaomi Pad', 'OnePlus Pad', 'Realme Pad'],
+        models: ['S9 FE', '10th Gen', 'P12', '6 Pro', 'Go', 'X'],
+        specs: ['Processor', 'RAM', 'Storage', 'Display', 'Battery', 'Camera'],
+        specOptions: {
+          Processor: ['Exynos 1380', 'A14 Bionic', 'Dimensity 7050', 'Snapdragon 870', 'Dimensity 9000', 'Helio G99'],
+          RAM: ['4GB', '4GB', '6GB', '8GB', '8GB', '12GB'],
+          Storage: ['64GB', '64GB', '128GB', '128GB', '256GB', '256GB'],
+          Display: ['10.9" LCD 90Hz', '10.9" Liquid Retina', '12.7" 2K LCD', '11" 2.8K 144Hz', '11.6" 2.8K AMOLED', '11" AMOLED 120Hz'],
+          Battery: ['6000mAh', '7600mAh', '8000mAh', '8600mAh', '9500mAh', '10090mAh'],
+          Camera: ['8MP', '12MP', '13MP + 8MP', '13MP + 8MP', '50MP + 8MP', '16MP + 8MP']
+        },
+        priceRange: [12000, 50000],
+        scoreWeights: { Processor: 2.5, RAM: 2, Storage: 1.5, Display: 2.5, Battery: 1.5, Camera: 1 }
+      },
+      smartwatch: {
+        icon: 'fa-clock', cssClass: 'smartwatch',
+        brands: ['Samsung Galaxy Watch', 'Apple Watch', 'Amazfit', 'Noise', 'Fire-Boltt', 'boAt Storm'],
+        models: ['6 Classic', 'SE 2', 'GTR 4', 'ColorFit Ultra 3', 'Phoenix Ultra', 'Call 3'],
+        specs: ['Display', 'Battery Life', 'Water Resistance', 'Sensors', 'Connectivity'],
+        specOptions: {
+          Display: ['1.3" AMOLED', '1.4" AMOLED', '1.43" AMOLED', '1.5" AMOLED', '1.6" AMOLED', '1.78" AMOLED'],
+          'Battery Life': ['2 days', '3 days', '5 days', '7 days', '10 days', '14 days'],
+          'Water Resistance': ['IP67', 'IP68', '5ATM', '5ATM + MIL-STD', '10ATM', '5ATM'],
+          Sensors: ['HR', 'HR + SpO2', 'HR + SpO2 + ECG', 'HR + SpO2 + Temp', 'HR + SpO2 + ECG + BP', 'HR + SpO2 + GPS'],
+          Connectivity: ['BT 5.0', 'BT 5.1', 'BT 5.2 + Calls', 'BT 5.3 + Calls', 'BT 5.3 + WiFi + Calls', 'BT 5.3 + LTE']
+        },
+        priceRange: [1500, 35000],
+        scoreWeights: { Display: 2, 'Battery Life': 3, 'Water Resistance': 1.5, Sensors: 2.5, Connectivity: 2 }
+      },
+      tv: {
+        icon: 'fa-tv', cssClass: 'tv',
+        brands: ['Samsung Crystal', 'LG', 'Sony Bravia', 'Mi TV', 'TCL', 'OnePlus TV'],
+        models: ['4K Pro 55"', 'UR7500 50"', 'X74L 43"', '5X Pro 55"', 'C645 50"', 'Y1S Pro 50"'],
+        specs: ['Display Size', 'Resolution', 'Panel Type', 'Smart TV OS', 'Sound'],
+        specOptions: {
+          'Display Size': ['43 inch', '43 inch', '50 inch', '50 inch', '55 inch', '55 inch'],
+          Resolution: ['Full HD', '4K UHD', '4K UHD', '4K UHD', '4K UHD QLED', '4K UHD'],
+          'Panel Type': ['LED', 'VA Panel', 'IPS', 'QLED', 'Mini LED', 'OLED'],
+          'Smart TV OS': ['Tizen', 'webOS', 'Google TV', 'PatchWall + Android', 'Google TV', 'Android TV'],
+          Sound: ['20W', '20W Dolby', '30W Dolby Atmos', '30W Dolby Atmos', '40W Dolby Atmos', '24W']
+        },
+        priceRange: [15000, 60000],
+        scoreWeights: { 'Display Size': 1.5, Resolution: 2.5, 'Panel Type': 3, 'Smart TV OS': 1, Sound: 2 }
+      },
+      camera: {
+        icon: 'fa-camera', cssClass: 'camera',
+        brands: ['Canon EOS', 'Nikon Z', 'Sony Alpha', 'Fujifilm X', 'Panasonic Lumix', 'Olympus OM'],
+        models: ['R50', '50', 'A6400', 'T30 II', 'G9 II', 'D E-M10 IV'],
+        specs: ['Sensor', 'Resolution', 'ISO Range', 'Video', 'Autofocus', 'Weight'],
+        specOptions: {
+          Sensor: ['APS-C CMOS', 'APS-C CMOS', 'Full Frame CMOS', 'APS-C X-Trans', 'Micro 4/3', 'Full Frame BSI'],
+          Resolution: ['24.2MP', '20.9MP', '26MP', '33MP', '45.7MP', '50.1MP'],
+          'ISO Range': ['100-25600', '100-32000', '100-51200', '100-102400', '64-25600', '100-51200'],
+          Video: ['4K 30fps', '4K 30fps', '4K 60fps', '6K 30fps', '4K 120fps', '8K 30fps'],
+          Autofocus: ['Dual Pixel AF', 'Hybrid AF 209pts', 'Fast Hybrid AF 425pts', 'Phase Detect 693pts', 'AI Tracking AF', 'Phase Detect 759pts'],
+          Weight: ['375g', '450g', '500g', '550g', '630g', '740g']
+        },
+        priceRange: [35000, 200000],
+        scoreWeights: { Sensor: 2, Resolution: 2, 'ISO Range': 1.5, Video: 2, Autofocus: 2.5, Weight: 1 }
+      }
+    };
+  }
+
+  detectCategory(query) {
+    const q = query.toLowerCase();
+    if (/laptop|notebook|macbook|chromebook/.test(q)) return 'laptop';
+    if (/phone|mobile|smartphone|iphone|android/.test(q)) return 'phone';
+    if (/headphone|earphone|earbuds|headset|buds|anc|noise cancell/.test(q)) return 'headphone';
+    if (/tablet|ipad/.test(q)) return 'tablet';
+    if (/smartwatch|watch|band|fitness track/.test(q)) return 'smartwatch';
+    if (/tv|television|monitor/.test(q)) return 'tv';
+    if (/camera|dslr|mirrorless/.test(q)) return 'camera';
+    return 'laptop'; // default
+  }
+
+  extractBudget(query) {
+    const m = query.match(/(under|below|within|upto|up to|max|less than|budget)[\s₹]*(\d[\d,]*)/i);
+    if (m) return parseInt(m[2].replace(/,/g, ''));
+    const m2 = query.match(/(\d[\d,]*)\s*(range|budget)/i);
+    if (m2) return parseInt(m2[1].replace(/,/g, ''));
+    return null;
+  }
+
+  generate(query) {
+    const category = this.detectCategory(query);
+    const budget = this.extractBudget(query);
+    const cat = this.categories[category];
+    const count = 5 + Math.floor(Math.random() * 2); // 5-6 products
+    const products = [];
+    const usedBrands = new Set();
+
+    for (let i = 0; i < count; i++) {
+      let brandIdx;
+      do { brandIdx = Math.floor(Math.random() * cat.brands.length); } while (usedBrands.has(brandIdx) && usedBrands.size < cat.brands.length);
+      usedBrands.add(brandIdx);
+
+      const name = cat.brands[brandIdx] + ' ' + cat.models[brandIdx];
+
+      // Price generation
+      let [minP, maxP] = cat.priceRange;
+      if (budget) { maxP = Math.min(maxP, budget); minP = Math.max(minP, budget * 0.4); }
+      const price = Math.round((minP + Math.random() * (maxP - minP)) / 100) * 100;
+      const mrp = Math.round(price * (1.1 + Math.random() * 0.25) / 100) * 100;
+
+      // Rating
+      const rating = Math.round((3.8 + Math.random() * 1.0) * 10) / 10;
+
+      // Specs — assign from tiered options based on a quality score
+      const qualityTier = Math.floor(Math.random() * cat.specOptions[cat.specs[0]].length);
+      const specs = {};
+      cat.specs.forEach(spec => {
+        const opts = cat.specOptions[spec];
+        // Bias toward qualityTier but with some randomness
+        let idx = Math.min(opts.length - 1, Math.max(0, qualityTier + Math.floor(Math.random() * 3) - 1));
+        specs[spec] = opts[idx];
+      });
+
+      products.push({ name, price, mrp, rating, specs, category, icon: cat.icon, cssClass: cat.cssClass, tier: qualityTier });
+    }
+
+    return { products, category, query };
+  }
+}
+
+// ===================== COMPARISON ENGINE =====================
+class ComparisonEngine {
+  constructor(db) {
+    this.db = db;
+  }
+
+  specScore(specValue, specKey, category) {
+    const cat = this.db.categories[category];
+    if (!cat) return 0;
+    const opts = cat.specOptions[specKey];
+    if (!opts) return 0;
+    const idx = opts.indexOf(specValue);
+    return idx >= 0 ? (idx + 1) / opts.length : 0.5;
+  }
+
+  scoreProduct(product) {
+    const cat = this.db.categories[product.category];
+    if (!cat) return 0;
+    let total = 0, weightSum = 0;
+    for (const spec of cat.specs) {
+      const w = cat.scoreWeights[spec] || 1;
+      total += this.specScore(product.specs[spec], spec, product.category) * w;
+      weightSum += w;
+    }
+    const specScore = total / weightSum;
+    const ratingScore = (product.rating - 3.5) / 1.5;
+    return specScore * 0.7 + ratingScore * 0.3;
+  }
+
+  analyze(data) {
+    const { products, category } = data;
+
+    // Score all
+    products.forEach(p => {
+      p.compositeScore = this.scoreProduct(p);
+      p.valueScore = p.compositeScore / (p.price / 100000); // score per lakh
+    });
+
+    // Sort by composite
+    products.sort((a, b) => b.compositeScore - a.compositeScore);
+
+    // Select top 4
+    const top = products.slice(0, 4);
+
+    // Assign labels
+    // Best Overall = highest composite
+    top[0].label = 'Best Overall';
+    top[0].badgeClass = 'badge-overall';
+    top[0].why = 'Top-rated with the best balance of specs, quality, and user satisfaction.';
+
+    // Best Value = best valueScore among remaining
+    const byValue = [...top.slice(1)].sort((a, b) => b.valueScore - a.valueScore);
+    if (byValue[0] && !byValue[0].label) {
+      byValue[0].label = 'Best Value for Money';
+      byValue[0].badgeClass = 'badge-value';
+      byValue[0].why = 'Delivers excellent specs at a price that\'s hard to beat.';
+    }
+
+    // Best Performance = best raw spec score among remaining (not including value)
+    const byPerf = [...top].filter(p => !p.label).sort((a, b) => b.compositeScore - a.compositeScore);
+    if (byPerf[0]) {
+      byPerf[0].label = 'Best Performance';
+      byPerf[0].badgeClass = 'badge-performance';
+      byPerf[0].why = 'Packs the most powerful specs for demanding tasks.';
+    }
+
+    // 4th label based on category
+    const fourthLabels = {
+      laptop: 'Best Battery', phone: 'Best Camera', headphone: 'Best ANC',
+      tablet: 'Best Display', smartwatch: 'Best Battery', tv: 'Best Audio', camera: 'Best Autofocus'
+    };
+    const remaining = top.filter(p => !p.label);
+    if (remaining[0]) {
+      remaining[0].label = fourthLabels[category] || 'Editor\'s Pick';
+      remaining[0].badgeClass = 'badge-battery';
+      remaining[0].why = `Stands out for its exceptional ${(fourthLabels[category] || 'features').replace('Best ', '').toLowerCase()}.`;
+    }
+
+    return { top, category, allProducts: products };
+  }
+}
+
+// ===================== UI RENDERER =====================
+class UIRenderer {
+  constructor() {
+    this.resultsArea = document.getElementById('resultsArea');
+  }
+
+  showLoading(query) {
+    this.resultsArea.innerHTML = `
+      <div class="loading">
+        <div class="loader"></div>
+        <p>Analyzing products for "${this.esc(query)}"<span class="dots"></span></p>
+      </div>`;
+  }
+
+  showEmpty() {
+    this.resultsArea.innerHTML = document.getElementById('emptyState') ? '' : '';
+    // Reset to original empty state
+    this.resultsArea.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <h3>Search for any product to get AI-powered recommendations</h3>
+        <p>Our AI analyzes specs, ratings, and price to find the best options for you</p>
+      </div>`;
+  }
+
+  renderResults(result) {
+    const { top, category, allProducts } = result;
+    const cat = db.categories[category];
+
+    let html = `
+      <div class="section-header">
+        <h2>Top Picks for You</h2>
+        <span class="ai-badge"><i class="fas fa-sparkles"></i> AI Analyzed ${allProducts.length} products</span>
+      </div>
+      <div class="product-grid">`;
+
+    top.forEach((p, i) => {
+      const stars = this.renderStars(p.rating);
+      const specTags = Object.entries(p.specs).slice(0, 4).map(([k, v]) => `<span class="spec-tag">${v}</span>`).join('');
+      const amazonUrl = `https://amazon.in/s?k=${encodeURIComponent(p.name)}&tag=youraffiliateid`;
+      const flipkartUrl = `https://www.flipkart.com/search?q=${encodeURIComponent(p.name)}`;
+
+      html += `
+        <div class="product-card${p.label === 'Best Overall' ? ' best-overall' : ''}" style="animation-delay:${i * 0.12}s">
+          ${p.label ? `<span class="badge ${p.badgeClass}">${p.label}</span>` : ''}
+          <div class="card-img ${p.cssClass}"><i class="fas ${p.icon}"></i></div>
+          <div class="card-body">
+            <h3>${this.esc(p.name)}</h3>
+            <div class="price">₹${p.price.toLocaleString('en-IN')}<span>₹${p.mrp.toLocaleString('en-IN')}</span></div>
+            <div class="stars">${stars}<span class="rating-num">${p.rating}</span></div>
+            <div class="specs">${specTags}</div>
+            ${p.why ? `<div class="why-best"><i class="fas fa-lightbulb"></i> ${p.why}</div>` : ''}
+            <div class="btn-row">
+              <a href="${amazonUrl}" target="_blank" rel="noopener" class="btn-affiliate btn-amazon"><i class="fab fa-amazon"></i> Buy on Amazon</a>
+              <a href="${flipkartUrl}" target="_blank" rel="noopener" class="btn-affiliate btn-flipkart"><i class="fas fa-shopping-cart"></i> Buy on Flipkart</a>
+            </div>
+          </div>
+        </div>`;
+    });
+
+    html += '</div>';
+
+    // Comparison Table
+    html += this.renderComparisonTable(top, cat);
+
+    this.resultsArea.innerHTML = html;
+    this.resultsArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  renderComparisonTable(products, cat) {
+    if (!cat) return '';
+    let html = `
+      <div class="comparison-section">
+        <h2><i class="fas fa-table"></i> Side-by-Side Comparison</h2>
+        <div style="overflow-x:auto">
+        <table class="comparison-table">
+          <thead><tr><th>Specification</th>`;
+
+    products.forEach(p => {
+      html += `<th class="product-col-header">${this.esc(p.name)}</th>`;
+    });
+    html += '</tr></thead><tbody>';
+
+    // Price row
+    html += '<tr><td><strong>Price</strong></td>';
+    const minPrice = Math.min(...products.map(p => p.price));
+    products.forEach(p => {
+      html += `<td class="${p.price === minPrice ? 'highlight' : ''}">₹${p.price.toLocaleString('en-IN')}</td>`;
+    });
+    html += '</tr>';
+
+    // Rating row
+    html += '<tr><td><strong>Rating</strong></td>';
+    const maxRating = Math.max(...products.map(p => p.rating));
+    products.forEach(p => {
+      html += `<td class="${p.rating === maxRating ? 'highlight' : ''}">${p.rating} ⭐</td>`;
+    });
+    html += '</tr>';
+
+    // Spec rows
+    cat.specs.forEach(spec => {
+      html += `<tr><td><strong>${spec}</strong></td>`;
+      const opts = cat.specOptions[spec];
+      let bestIdx = -1, bestVal = -1;
+      products.forEach((p, i) => {
+        const idx = opts.indexOf(p.specs[spec]);
+        if (idx > bestVal) { bestVal = idx; bestIdx = i; }
+      });
+      products.forEach((p, i) => {
+        html += `<td class="${i === bestIdx ? 'highlight' : ''}">${this.esc(p.specs[spec])}</td>`;
+      });
+      html += '</tr>';
+    });
+
+    // Label row
+    html += '<tr><td><strong>AI Verdict</strong></td>';
+    products.forEach(p => {
+      html += `<td><strong style="color:var(--primary-light)">${p.label || '—'}</strong></td>`;
+    });
+    html += '</tr>';
+
+    html += '</tbody></table></div></div>';
+    return html;
+  }
+
+  renderStars(rating) {
+    let html = '';
+    const full = Math.floor(rating);
+    const half = rating % 1 >= 0.3;
+    for (let i = 0; i < 5; i++) {
+      if (i < full) html += '<i class="fas fa-star"></i>';
+      else if (i === full && half) html += '<i class="fas fa-star-half-alt"></i>';
+      else html += '<i class="far fa-star empty"></i>';
+    }
+    return html;
+  }
+
+  esc(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+}
+
+// ===================== APP INIT =====================
+const db = new ProductDatabase();
+const engine = new ComparisonEngine(db);
+const ui = new UIRenderer();
+
+function doSearch(query) {
+  if (!query.trim()) return;
+  document.getElementById('searchInput').value = query;
+  ui.showLoading(query);
+
+  // Simulate AI processing time
+  setTimeout(() => {
+    const data = db.generate(query);
+    const result = engine.analyze(data);
+    ui.renderResults(result);
+  }, 1500);
+}
+
+// Search handlers
+document.getElementById('searchBtn').addEventListener('click', () => doSearch(document.getElementById('searchInput').value));
+document.getElementById('searchInput').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(e.target.value); });
+
+// Chip handlers
+document.querySelectorAll('.chip, .trending-chip').forEach(chip => {
+  chip.addEventListener('click', () => doSearch(chip.dataset.query));
+});
+
+// Placeholder animation
+const placeholders = ['Try "laptop under 60000"', 'Try "best phones under 30000"', 'Try "wireless headphones"', 'Try "4k TV under 40000"', 'Try "smartwatch with SpO2"'];
+let phIdx = 0;
+setInterval(() => {
+  phIdx = (phIdx + 1) % placeholders.length;
+  document.getElementById('searchInput').placeholder = placeholders[phIdx];
+}, 3000);
+</script>
+</body>
+</html>
